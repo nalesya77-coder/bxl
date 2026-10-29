@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BXL COMMUNITY - Pendaftaran Anggota</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- html2canvas for capturing member card cleanly -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0a0512',
+                            card: '#140b24',
+                            purple: '#8b5cf6',
+                            neon: '#a855f7',
+                            pink: '#ec4899',
+                            accent: '#c084fc'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        glow: {
+                            '0%': { boxShadow: '0 0 15px rgba(168, 85, 247, 0.4), inset 0 0 15px rgba(168, 85, 247, 0.2)' },
+                            '100%': { boxShadow: '0 0 30px rgba(168, 85, 247, 0.8), inset 0 0 20px rgba(168, 85, 247, 0.5)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-8px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #06020c;
+            color: #f3f4f6;
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(236, 72, 153, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(10, 5, 18, 0.9) 0%, #06020c 100%);
+            background-attachment: fixed;
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .neon-text-purple {
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.8), 0 0 20px rgba(168, 85, 247, 0.5);
+        }
+
+        .neon-border {
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+        }
+
+        .neon-border:focus-within {
+            box-shadow: 0 0 25px rgba(168, 85, 247, 0.7);
+            border-color: #a855f7;
+        }
+
+        .btn-glow {
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #ec4899 100%);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-glow:hover {
+            box-shadow: 0 0 35px rgba(168, 85, 247, 0.85);
+            transform: translateY(-2px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0512;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4c1d95;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7c3aed;
+        }
+
+        /* Card ID watermark */
+        .card-pattern {
+            background-image: radial-gradient(rgba(168, 85, 247, 0.1) 1px, transparent 0);
+            background-size: 16px 16px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden selection:bg-purple-600 selection:text-white">
+
+    <!-- Toast Notification Box -->
+    <div id="toast" class="fixed top-5 right-5 z-50 transform translate-x-full transition-all duration-300 ease-out max-w-sm w-full bg-slate-900/90 border border-purple-500/50 backdrop-blur-md text-white p-4 rounded-xl shadow-2xl flex items-center gap-3">
+        <div id="toastIcon" class="w-10 h-10 rounded-full bg-purple-600/30 border border-purple-400 flex items-center justify-center text-purple-300">
+            <i class="fa-solid fa-check text-lg"></i>
+        </div>
+        <div class="flex-1">
+            <h4 id="toastTitle" class="font-bold text-sm text-purple-300">Pemberitahuan</h4>
+            <p id="toastMessage" class="text-xs text-gray-300 mt-0.5">Pesan notifikasi...</p>
+        </div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <header class="sticky top-0 z-40 bg-[#0a0512]/80 backdrop-blur-md border-b border-purple-900/40">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="relative w-11 h-11 rounded-xl bg-gradient-to-tr from-purple-900 via-purple-600 to-pink-500 p-0.5 animate-pulse-slow">
+                    <div class="w-full h-full bg-[#0a0512] rounded-[10px] flex items-center justify-center font-orbitron font-extrabold text-xl text-purple-300 tracking-wider">
+                        BXL
+                    </div>
+                </div>
+                <div>
+                    <h1 class="font-orbitron font-extrabold text-lg text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                        BXL COMMUNITY
+                    </h1>
+                    <p class="text-[10px] text-purple-300/70 tracking-widest uppercase">Official Cyber Guild</p>
+                </div>
+            </div>
+            <a href="#code-section" class="px-3 py-1.5 rounded-lg bg-purple-950/60 border border-purple-500/30 text-purple-300 text-xs font-semibold hover:bg-purple-900/50 transition">
+                <i class="fa-solid fa-key mr-1 text-purple-400"></i> Dapatkan Kode
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-5xl mx-auto w-full px-4 py-6 space-y-12">
+
+        <!-- WELCOME SECTION -->
+        <section class="text-center relative py-8 px-4">
+            <!-- Anime Hero Decoration Background -->
+            <div class="absolute inset-0 -z-10 flex items-center justify-center opacity-25 blur-3xl pointer-events-none">
+                <div class="w-72 h-72 rounded-full bg-purple-600"></div>
+                <div class="w-72 h-72 rounded-full bg-pink-600 -ml-20"></div>
+            </div>
+
+            <div class="inline-block mb-3 px-4 py-1.5 rounded-full bg-purple-900/40 border border-purple-500/40 backdrop-blur-md">
+                <span class="text-xs font-semibold text-purple-300 tracking-widest uppercase flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
+                    ✦ Official Member Registration ✦
+                </span>
+            </div>
+
+            <h2 class="font-orbitron font-black text-3xl sm:text-5xl text-white tracking-wide mb-3 neon-text-purple">
+                ✦ 𝐒𝐄𝐋𝐀𝐌𝐀𝐓 𝐃𝐀𝐓𝐀𝐍𝐆 ✦
+            </h2>
+            <h3 class="font-orbitron font-extrabold text-2xl sm:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-purple-300 mb-4">
+                𝐁𝐗𝐋 𝐂𝐎𝐌𝐌𝐔𝐍𝐈𝐓𝐘
+            </h3>
+
+            <p class="max-w-xl mx-auto text-sm sm:text-base text-purple-200/80 leading-relaxed font-light italic">
+                “Selamat datang di BXL Community! Daftarkan dirimu sekarang dan jadilah bagian dari keluarga BXL.”
+            </p>
+
+            <!-- Anime Avatar Decor Banner -->
+            <div class="mt-8 flex justify-center items-center gap-3 sm:gap-6 overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1578632767115-351597cf2477?w=150&auto=format&fit=crop&q=80" alt="Anime Mascot 1" class="w-14 h-14 sm:w-20 sm:h-20 rounded-full border-2 border-purple-500 object-cover shadow-lg shadow-purple-500/30 animate-float" style="animation-delay: 0s;">
+                <img src="https://images.unsplash.com/photo-1563089145-599997674d42?w=150&auto=format&fit=crop&q=80" alt="Anime Mascot 2" class="w-20 h-20 sm:w-28 sm:h-28 rounded-full border-2 border-pink-500 object-cover shadow-lg shadow-pink-500/40 animate-float" style="animation-delay: 0.5s;">
+                <img src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=150&auto=format&fit=crop&q=80" alt="Anime Mascot 3" class="w-14 h-14 sm:w-20 sm:h-20 rounded-full border-2 border-purple-500 object-cover shadow-lg shadow-purple-500/30 animate-float" style="animation-delay: 1s;">
+            </div>
+        </section>
+
+        <!-- FORM & PREVIEW SECTION -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- REGISTRATION FORM -->
+            <div class="lg:col-span-7 bg-[#110822]/90 border border-purple-500/30 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+                <div class="absolute -top-12 -right-12 w-32 h-32 bg-purple-600/20 rounded-full blur-2xl pointer-events-none"></div>
+
+                <div class="flex items-center gap-3 mb-6 pb-4 border-b border-purple-900/50">
+                    <div class="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-400/30 flex items-center justify-center text-purple-400">
+                        <i class="fa-solid fa-id-card text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-orbitron font-bold text-lg text-white">Formulir Pendaftaran</h3>
+                        <p class="text-xs text-purple-300/70">Lengkapi data diri untuk mencetak kartu digital BXL</p>
+                    </div>
+                </div>
+
+                <form id="registerForm" onsubmit="handleRegistration(event)" class="space-y-5">
+                    <!-- Photo Upload -->
+                    <div>
+                        <label class="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-2">
+                            Foto Profil (Galeri HP) <span class="text-pink-500">*</span>
+                        </label>
+                        <div class="flex items-center gap-4">
+                            <div class="relative w-20 h-20 rounded-2xl bg-purple-950/60 border-2 border-dashed border-purple-500/50 flex flex-col items-center justify-center overflow-hidden shrink-0 group">
+                                <img id="previewImage" src="" alt="Preview" class="w-full h-full object-cover hidden">
+                                <div id="uploadPlaceholder" class="flex flex-col items-center justify-center text-purple-400 p-2 text-center">
+                                    <i class="fa-solid fa-cloud-arrow-up text-xl mb-1 group-hover:scale-110 transition"></i>
+                                    <span class="text-[9px] leading-tight">Pilih Foto</span>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <input type="file" id="photoInput" accept="image/*" class="hidden" onchange="previewFile(event)" required>
+                                <button type="button" onclick="document.getElementById('photoInput').click()" class="px-4 py-2 bg-purple-900/40 hover:bg-purple-800/50 border border-purple-500/40 text-purple-200 text-xs rounded-xl font-medium transition flex items-center gap-2">
+                                    <i class="fa-solid fa-image"></i> Unggah Gambar
+                                </button>
+                                <button type="button" onclick="useAnimePreset()" class="mt-2 text-xs text-pink-400 hover:text-pink-300 underline block font-light">
+                                    Gunakan Avatar Anime Bawaan
+                                </button>
+                                <p class="text-[10px] text-gray-400 mt-1">Format: JPG, PNG, WEBP (Max 5MB)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Nama -->
+                    <div>
+                        <label for="fullName" class="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-1.5">
+                            Nama Lengkap / Nickname <span class="text-pink-500">*</span>
+                        </label>
+                        <div class="relative neon-border rounded-xl bg-purple-950/30">
+                            <i class="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-purple-400 text-sm"></i>
+                            <input type="text" id="fullName" required placeholder="Contoh: Alex 'Shadow' BXL" 
+                                class="w-full bg-transparent py-3 pl-10 pr-4 text-sm text-white focus:outline-none placeholder-purple-400/40">
+                        </div>
+                    </div>
+
+                    <!-- Umur & Asal Kota Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Umur -->
+                        <div>
+                            <label for="age" class="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-1.5">
+                                Umur <span class="text-pink-500">*</span>
+                            </label>
+                            <div class="relative neon-border rounded-xl bg-purple-950/30">
+                                <i class="fa-solid fa-cake-candles absolute left-3.5 top-1/2 -translate-y-1/2 text-purple-400 text-sm"></i>
+                                <input type="number" id="age" min="10" max="99" required placeholder="18" 
+                                    class="w-full bg-transparent py-3 pl-10 pr-4 text-sm text-white focus:outline-none placeholder-purple-400/40">
+                            </div>
+                        </div>
+
+                        <!-- Asal Kota -->
+                        <div>
+                            <label for="city" class="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-1.5">
+                                Asal Kota <span class="text-pink-500">*</span>
+                            </label>
+                            <div class="relative neon-border rounded-xl bg-purple-950/30">
+                                <i class="fa-solid fa-location-dot absolute left-3.5 top-1/2 -translate-y-1/2 text-purple-400 text-sm"></i>
+                                <input type="text" id="city" required placeholder="Jakarta / Bandung" 
+                                    class="w-full bg-transparent py-3 pl-10 pr-4 text-sm text-white focus:outline-none placeholder-purple-400/40">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Jenis Kelamin -->
+                    <div>
+                        <label class="block text-xs font-semibold text-purple-300 uppercase tracking-wider mb-2">
+                            Jenis Kelamin <span class="text-pink-500">*</span>
+                        </label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="gender" value="Cowok" class="peer hidden" checked>
+                                <div class="py-3 px-4 rounded-xl border border-purple-500/30 bg-purple-950/20 peer-checked:bg-purple-600/30 peer-checked:border-purple-400 flex items-center justify-center gap-2 text-sm text-purple-200 transition">
+                                    <i class="fa-solid fa-mars text-blue-400"></i> Cowok
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="gender" value="Cewek" class="peer hidden">
+                                <div class="py-3 px-4 rounded-xl border border-purple-500/30 bg-purple-950/20 peer-checked:bg-pink-600/30 peer-checked:border-pink-400 flex items-center justify-center gap-2 text-sm text-purple-200 transition">
+                                    <i class="fa-solid fa-venus text-pink-400"></i> Cewek
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="submitBtn" class="w-full py-4 mt-4 rounded-xl btn-glow font-orbitron font-bold text-white tracking-widest uppercase flex items-center justify-center gap-2 text-sm sm:text-base">
+                        <i class="fa-solid fa-sparkles"></i>
+                        <span>✦ DAFTAR SEKARANG ✦</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- RESULT & CARD DISPLAY -->
+            <div class="lg:col-span-5 flex flex-col items-center">
+                
+                <!-- Placeholder / Instruction State -->
+                <div id="cardPlaceholderState" class="w-full bg-[#110822]/60 border border-purple-500/20 rounded-3xl p-8 text-center backdrop-blur-md min-h-[380px] flex flex-col justify-center items-center">
+                    <div class="w-20 h-20 rounded-full bg-purple-900/30 border border-purple-500/40 flex items-center justify-center text-purple-400 mb-4 animate-pulse">
+                        <i class="fa-solid fa-id-card-clip text-3xl"></i>
+                    </div>
+                    <h4 class="font-orbitron font-semibold text-white text-base mb-2">Kartu Anggota Digital</h4>
+                    <p class="text-xs text-purple-300/70 max-w-xs">
+                        Isi formulir pendaftaran di sebelah kiri untuk melihat dan mengunduh Kartu Anggota BXL Kamu secara otomatis.
+                    </p>
+                </div>
+
+                <!-- SUCCESS & CARD CONTAINER (Hidden by default) -->
+                <div id="cardSuccessState" class="w-full hidden space-y-6">
+                    
+                    <!-- Success Banner Notification -->
+                    <div class="bg-gradient-to-r from-purple-900/80 to-pink-900/80 border border-purple-400/50 rounded-2xl p-4 text-center shadow-lg animate-bounce-short">
+                        <h4 class="font-orbitron font-bold text-sm text-purple-200 mb-1">
+                            ✦ SELAMAT DATANG DI BXL COMMUNITY! ✦
+                        </h4>
+                        <p class="text-xs text-purple-100/90 leading-relaxed font-light">
+                            Pendaftaran kamu berhasil. Selamat bergabung dan semoga betah bersama keluarga BXL!
+                        </p>
+                    </div>
+
+                    <!-- THE DIGITAL MEMBER CARD TO DOWNLOAD -->
+                    <div id="memberCardContainer" class="relative w-full max-w-md mx-auto aspect-[1.586/1] bg-gradient-to-br from-[#120726] via-[#1c0c3a] to-[#0d031c] border-2 border-purple-500/60 rounded-2xl p-5 shadow-2xl overflow-hidden card-pattern flex flex-col justify-between">
+                        
+                        <!-- Glow Accents -->
+                        <div class="absolute -top-10 -left-10 w-32 h-32 bg-purple-500/20 rounded-full blur-xl pointer-events-none"></div>
+                        <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-pink-500/20 rounded-full blur-xl pointer-events-none"></div>
+
+                        <!-- Card Header -->
+                        <div class="flex justify-between items-center z-10 border-b border-purple-500/30 pb-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-pink-500 p-0.5">
+                                    <div class="w-full h-full bg-slate-950 rounded-[6px] flex items-center justify-center font-orbitron font-black text-xs text-purple-300">
+                                        BXL
+                                    </div>
+                                </div>
+                                <div>
+                                    <h5 class="font-orbitron font-extrabold text-xs text-white tracking-wide">BXL COMMUNITY</h5>
+                                    <p class="text-[8px] text-purple-300 uppercase tracking-widest">OFFICIAL MEMBER CARD</p>
+                                </div>
+                            </div>
+                            <span class="text-[9px] font-mono px-2 py-0.5 rounded bg-purple-900/80 border border-purple-400/40 text-purple-200">
+                                MEMBER VERIFIED
+                            </span>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="grid grid-cols-12 gap-3 items-center z-10 my-2">
+                            <!-- Photo -->
+                            <div class="col-span-4 flex justify-center">
+                                <div class="w-20 h-24 sm:w-24 sm:h-28 rounded-xl p-0.5 bg-gradient-to-b from-purple-400 to-pink-500 shadow-lg overflow-hidden">
+                                    <img id="cardPhoto" src="" alt="Member Photo" class="w-full h-full object-cover rounded-[10px]">
+                                </div>
+                            </div>
+
+                            <!-- Member Details -->
+                            <div class="col-span-8 space-y-1 text-left">
+                                <div>
+                                    <p class="text-[8px] text-purple-400 uppercase tracking-wider font-semibold">NAMA ANGGOTA</p>
+                                    <h4 id="cardName" class="font-orbitron font-bold text-sm text-white tracking-wide truncate">---</h4>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-1 text-[10px]">
+                                    <div>
+                                        <p class="text-[8px] text-purple-400 uppercase tracking-wider font-semibold">UMUR</p>
+                                        <p id="cardAge" class="text-purple-100 font-medium">-- Thn</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-[8px] text-purple-400 uppercase tracking-wider font-semibold">GENDER</p>
+                                        <p id="cardGender" class="text-purple-100 font-medium">--</p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <p class="text-[8px] text-purple-400 uppercase tracking-wider font-semibold">ASAL KOTA</p>
+                                    <p id="cardCity" class="text-[11px] text-purple-100 font-medium truncate">--</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Footer -->
+                        <div class="flex justify-between items-end z-10 pt-2 border-t border-purple-500/30">
+                            <div>
+                                <p class="text-[7px] text-purple-400 uppercase tracking-widest font-semibold">KODE ANGGOTA UNIK</p>
+                                <p id="cardCode" class="font-mono font-bold text-xs sm:text-sm text-pink-300 tracking-wider">BXL-XXXXX</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[7px] text-gray-400 italic">Official Community Card</p>
+                                <p class="text-[6px] text-gray-500">*Bukan KTP Resmi Pemerintah</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Button to Download PNG -->
+                    <button onclick="downloadCardPNG()" class="w-full py-3 rounded-xl bg-purple-900/60 hover:bg-purple-800/80 border border-purple-400/50 text-white font-semibold text-xs tracking-wider uppercase transition flex items-center justify-center gap-2 shadow-lg">
+                        <i class="fa-solid fa-download text-pink-400"></i> Unduh Kartu Anggota (PNG)
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- CODE SYSTEM SECTION -->
+        <section id="code-section" class="bg-[#110822]/80 border border-purple-500/30 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-purple-900/50">
+                <div>
+                    <h3 class="font-orbitron font-extrabold text-xl text-white flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-purple-400"></i> System 200 Kode Anggota
+                    </h3>
+                    <p class="text-xs text-purple-300/70 mt-1">Daftar kode unik terenkripsi BXL. Kode otomatis digunakan saat pendaftaran.</p>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="copyAllCodes()" class="px-3.5 py-2 rounded-xl bg-purple-900/50 hover:bg-purple-800/60 border border-purple-500/30 text-purple-200 text-xs font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-copy"></i> Salin Semua Kode
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+                <div class="bg-purple-950/40 border border-purple-500/20 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-purple-300 uppercase block">Total Kode</span>
+                    <span id="statTotal" class="font-orbitron font-bold text-lg text-white">200</span>
+                </div>
+                <div class="bg-purple-950/40 border border-purple-500/20 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-green-400 uppercase block">Tersedia</span>
+                    <span id="statAvailable" class="font-orbitron font-bold text-lg text-green-400">200</span>
+                </div>
+                <div class="col-span-2 sm:col-span-1 bg-purple-950/40 border border-purple-500/20 rounded-xl p-3 text-center">
+                    <span class="text-[10px] text-pink-400 uppercase block">Terpakai</span>
+                    <span id="statUsed" class="font-orbitron font-bold text-lg text-pink-400">0</span>
+                </div>
+            </div>
+
+            <!-- Code Search & Filter -->
+            <div class="mb-4 flex gap-2">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-purple-400"></i>
+                    <input type="text" id="codeSearch" oninput="renderCodes()" placeholder="Cari kode..." class="w-full bg-purple-950/30 border border-purple-500/30 rounded-xl py-2 pl-9 pr-3 text-xs text-white focus:outline-none focus:border-purple-400">
+                </div>
+                <select id="codeFilter" onchange="renderCodes()" class="bg-purple-950/30 border border-purple-500/30 rounded-xl px-3 py-2 text-xs text-purple-200 focus:outline-none">
+                    <option value="all">Semua Status</option>
+                    <option value="available">Tersedia</option>
+                    <option value="used">Terpakai</option>
+                </select>
+            </div>
+
+            <!-- Scrollable Grid of 200 Codes -->
+            <div class="max-h-72 overflow-y-auto pr-1">
+                <div id="codeGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                    <!-- Codes rendered dynamically -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-purple-900/40 bg-[#07030e] py-6 text-center text-xs text-purple-400/60 mt-12">
+        <p>© 2026 BXL COMMUNITY. All rights reserved.</p>
+        <p class="mt-1 text-[10px]">Kartu ini merupakan bukti keanggotaan komunitas digital dan tidak memiliki status resmi pemerintah.</p>
+    </footer>
+
+    <!-- Firebase Realtime Persistence Engine Script -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Config Setup
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'bxl-community-app';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {
+                apiKey: "AIzaSyDummyKeyForLocalFallbackOnly12345",
+                authDomain: "bxl-community.firebaseapp.com",
+                projectId: "bxl-community",
+                storageBucket: "bxl-community.appspot.com",
+                messagingSenderId: "123456789",
+                appId: "1:123456789:web:abcdef123456"
+            };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let localCodesList = [];
+        let usedCodesMap = {}; // { code: memberData }
+
+        // Anime Preset Image Fallback
+        const ANIME_PRESET = "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&auto=format&fit=crop&q=80";
+
+        // Generate static list of 200 deterministic codes based on seeds
+        function generate200Codes() {
+            const codes = [];
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            // Seed-based randomizer to keep exact list consistent for 200 items
+            let seed = 8882026;
+            function pseudoRandom() {
+                seed = (seed * 9301 + 49297) % 233280;
+                return seed / 233280;
+            }
+
+            for (let i = 0; i < 200; i++) {
+                let codeStr = 'BXL-';
+                for (let j = 0; j < 8; j++) {
+                    const idx = Math.floor(pseudoRandom() * chars.length);
+                    codeStr += chars[idx];
+                }
+                codes.push(codeStr);
+            }
+            return codes;
+        }
+
+        localCodesList = generate200Codes();
+
+        // Auth initialization
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.warn("Auth fallback mode active:", err);
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                listenToCodesDatabase();
+            }
+        });
+
+        // Listen to Firestore for realtime synced used codes across all members
+        function listenToCodesDatabase() {
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'codes_db', 'state');
+            
+            onSnapshot(docRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    usedCodesMap = snapshot.data().usedCodes || {};
+                } else {
+                    usedCodesMap = {};
+                }
+                renderCodes();
+                updateStats();
+            }, (error) => {
+                console.error("Firestore sync error:", error);
+            });
+        }
+
+        // Global functions attachment for UI access
+        window.previewFile = function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('previewImage');
+                    const placeholder = document.getElementById('uploadPlaceholder');
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        window.useAnimePreset = function() {
+            const preview = document.getElementById('previewImage');
+            const placeholder = document.getElementById('uploadPlaceholder');
+            preview.src = ANIME_PRESET;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            showToast("Sukses", "Foto anime preset berhasil dipilih!", "success");
+        };
+
+        window.handleRegistration = async function(event) {
+            event.preventDefault();
+
+            const fullName = document.getElementById('fullName').value.trim();
+            const age = document.getElementById('age').value.trim();
+            const city = document.getElementById('city').value.trim();
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+            const previewImgSrc = document.getElementById('previewImage').src;
+
+            if (!fullName || !age || !city) {
+                showToast("Error", "Harap isi semua kolom formulir!", "error");
+                return;
+            }
+
+            if (!previewImgSrc || previewImgSrc === window.location.href) {
+                showToast("Foto Dibutuhkan", "Harap unggah foto profil terlebih dahulu!", "error");
+                return;
+            }
+
+            // Find first available unused code
+            const availableCode = localCodesList.find(c => !usedCodesMap[c]);
+
+            if (!availableCode) {
+                showToast("Kuota Penuh", "Maaf, seluruh 200 kode anggota BXL telah terpakai!", "error");
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Memproses Kartu...</span>`;
+
+            const memberData = {
+                name: fullName,
+                age: age,
+                city: city,
+                gender: gender,
+                photo: previewImgSrc,
+                code: availableCode,
+                registeredAt: new Date().toISOString()
+            };
+
+            // Save to Firestore permanently if authenticated
+            if (currentUser) {
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'codes_db', 'state');
+                    const updatedMap = { ...usedCodesMap, [availableCode]: memberData };
+                    await setDoc(docRef, { usedCodes: updatedMap }, { merge: true });
+                } catch (err) {
+                    console.error("Gagal simpan database:", err);
+                    usedCodesMap[availableCode] = memberData; // Local fallback
+                }
+            } else {
+                usedCodesMap[availableCode] = memberData;
+            }
+
+            // Render output card
+            document.getElementById('cardName').innerText = fullName;
+            document.getElementById('cardAge').innerText = age + " Thn";
+            document.getElementById('cardCity').innerText = city;
+            document.getElementById('cardGender').innerText = gender;
+            document.getElementById('cardCode').innerText = availableCode;
+            document.getElementById('cardPhoto').src = previewImgSrc;
+
+            // Toggle view state
+            document.getElementById('cardPlaceholderState').classList.add('hidden');
+            document.getElementById('cardSuccessState').classList.remove('hidden');
+
+            renderCodes();
+            updateStats();
+
+            showToast("Pendaftaran Berhasil!", `Selamat datang ${fullName} di BXL Community!`, "success");
+
+            // Scroll smoothly to generated card on mobile
+            if (window.innerWidth < 1024) {
+                document.getElementById('cardSuccessState').scrollIntoView({ behavior: 'smooth' });
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `<i class="fa-solid fa-sparkles"></i> <span>✦ DAFTAR SEKARANG ✦</span>`;
+        };
+
+        window.renderCodes = function() {
+            const grid = document.getElementById('codeGrid');
+            const searchQuery = (document.getElementById('codeSearch').value || '').toLowerCase();
+            const filterValue = document.getElementById('codeFilter').value;
+
+            grid.innerHTML = '';
+
+            localCodesList.forEach((code) => {
+                const isUsed = !!usedCodesMap[code];
+
+                if (filterValue === 'available' && isUsed) return;
+                if (filterValue === 'used' && !isUsed) return;
+                if (searchQuery && !code.toLowerCase().includes(searchQuery)) return;
+
+                const card = document.createElement('div');
+                card.className = `p-2.5 rounded-xl border flex items-center justify-between transition-all ${
+                    isUsed 
+                        ? 'bg-pink-950/20 border-pink-500/30 text-pink-300' 
+                        : 'bg-purple-950/30 border-purple-500/20 text-purple-200 hover:border-purple-400'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <i class="${isUsed ? 'fa-solid fa-circle-check text-pink-400' : 'fa-regular fa-circle text-purple-400'} text-xs"></i>
+                        <span class="font-mono text-xs font-bold tracking-wider truncate">${code}</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <span class="text-[9px] px-1.5 py-0.5 rounded ${isUsed ? 'bg-pink-900/60 text-pink-200' : 'bg-purple-900/60 text-purple-300'}">
+                            ${isUsed ? 'Terpakai' : 'Bebas'}
+                        </span>
+                        <button onclick="copySingleCode('${code}')" class="p-1 hover:text-white transition" title="Salin Kode">
+                            <i class="fa-solid fa-copy text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        };
+
+        function updateStats() {
+            const total = localCodesList.length;
+            const usedCount = Object.keys(usedCodesMap).length;
+            const availableCount = total - usedCount;
+
+            document.getElementById('statTotal').innerText = total;
+            document.getElementById('statAvailable').innerText = availableCount;
+            document.getElementById('statUsed').innerText = usedCount;
+        }
+
+        window.copySingleCode = function(code) {
+            copyToClipboard(code);
+            showToast("Kode Disalin", `Kode ${code} berhasil disalin ke clipboard.`, "info");
+        };
+
+        window.copyAllCodes = function() {
+            const allText = localCodesList.map(c => `${c} [${usedCodesMap[c] ? 'TERPAKAI' : 'AVAILABLE'}]`).join('\n');
+            copyToClipboard(allText);
+            showToast("Semua Kode Disalin", "200 Kode keanggotaan BXL berhasil disalin!", "success");
+        };
+
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+
+        window.downloadCardPNG = function() {
+            const cardElem = document.getElementById('memberCardContainer');
+            showToast("Mengunduh...", "Sedang memproses gambar kartu anggota BXL...", "info");
+
+            html2canvas(cardElem, {
+                scale: 3,
+                useCORS: true,
+                backgroundColor: null
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `BXL-MEMBER-CARD-${document.getElementById('cardCode').innerText}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast("Berhasil", "Kartu anggota telah tersimpan di galeri kamu!", "success");
+            }).catch(err => {
+                console.error("Gagal cetak PNG:", err);
+                showToast("Gagal", "Tidak dapat mengunduh gambar kartu.", "error");
+            });
+        };
+
+        function showToast(title, message, type = "info") {
+            const toast = document.getElementById('toast');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastTitle.innerText = title;
+            toastMessage.innerText = message;
+
+            if (type === 'success') {
+                toastIcon.className = "w-10 h-10 rounded-full bg-green-600/30 border border-green-400 flex items-center justify-center text-green-300";
+                toastIcon.innerHTML = `<i class="fa-solid fa-check"></i>`;
+            } else if (type === 'error') {
+                toastIcon.className = "w-10 h-10 rounded-full bg-red-600/30 border border-red-400 flex items-center justify-center text-red-300";
+                toastIcon.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i>`;
+            } else {
+                toastIcon.className = "w-10 h-10 rounded-full bg-purple-600/30 border border-purple-400 flex items-center justify-center text-purple-300";
+                toastIcon.innerHTML = `<i class="fa-solid fa-info"></i>`;
+            }
+
+            toast.classList.remove('translate-x-full');
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 3500);
+        }
+
+        // Initialize Application
+        initAuth();
+        renderCodes();
+    </script>
+</body>
+</html>
